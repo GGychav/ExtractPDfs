@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+//using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+//using System.Text;
+//using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using System.Text.RegularExpressions;
@@ -13,9 +13,9 @@ using System.IO;
 
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf;
-using iText.Kernel.Geom;
+//using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas.Parser;
-using iText.IO;
+//using iText.IO;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
@@ -51,6 +51,8 @@ namespace ExtractPDfs
 
     
         //Global Vars
+
+        //Path for the Instructions manual
         public static string locationToInstructionsPdf = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "PDF_Extract_instructions.pdf");
 
         private void Closebutton_Click(object sender, EventArgs e)
@@ -114,7 +116,7 @@ namespace ExtractPDfs
         {
 
             
-
+            //Update the Details text
             Statuslabel1.Text = "Working...";
             Statuslabel1.Invalidate();
             Statuslabel1.Update();
@@ -158,7 +160,7 @@ namespace ExtractPDfs
             }
             else
             {
-                //Extract Index as is without data import.
+                //Extract Index from search text entry
                 Extract_the_PDFs(pdfFilePath, csvfFilePath, IDKeys, true);
             }
 
@@ -241,8 +243,8 @@ namespace ExtractPDfs
         List<KeyValuePair<int, string>> ID_Index(string PdfFile, string singleText, string dataType)
         {
 
+            //Setup Variabled
             var list = new List<KeyValuePair<int, string>>();
-
             var reg = new Regex(@"\b\d{" + numericUpDown1.Value + @"}\b");
              
             string PreviousMatch ="";
@@ -261,24 +263,29 @@ namespace ExtractPDfs
             PdfDocument pdfDoc = new PdfDocument(reader);
 
 
+            //setup progresss for indexing
             progressBar1.Maximum = pdfDoc.GetNumberOfPages();
 
 
+            //Search through every page of the document for the index item.
             for (int pageNumber = 1; pageNumber <= pdfDoc.GetNumberOfPages(); pageNumber++)
             {
 
                 progressBar1.Value = pageNumber;
 
+                //Read contents of page
                 ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
-
                 string currentPageText = PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(pageNumber), strategy);
 
+
+                //If the Index data requested is a numerial value, use the number of digits chosen by the number numberic up down control
                 if (dataType == "id")
                 {
+                    //Check with the regular expression
                     Match matched = reg.Match(currentPageText);
                     
 
-
+                    //If found add the key value pair to the list if found. If there is no number found, then assume the page is the same ID index as the previous page.
                     if (matched.Success)
                             {
                 list.Add(new KeyValuePair<int, string>(pageNumber, matched.Value));
@@ -295,6 +302,7 @@ namespace ExtractPDfs
                     
                     
                 }
+                //Add the key value pair to the list if the index is not numberical and instead the string in the search text box
                 else 
                 {
 
@@ -311,7 +319,7 @@ namespace ExtractPDfs
 
             }
 
-
+            //Close the source PDF handle and return the key value pair list.
             pdfDoc.Close();
             return list;
 
@@ -341,7 +349,8 @@ namespace ExtractPDfs
 
             if(single)
             {
-                //File of found IDs
+                //open the source PDF
+
                 FileInfo file = new FileInfo(PdfFile);
                 string pdfFileName = file.Name.Substring(0, file.Name.LastIndexOf(".")) + "-" + SearchtextBox.Text;
                 string outputPath = file.Directory.FullName;
@@ -359,6 +368,7 @@ namespace ExtractPDfs
                 pdfDocExtract.Close();
                 OutpdfDoc.Close();
 
+                //Open extracted folder if the check box is selected.
                 if (OpenDestcheckBox4.Checked)
                 {
                     System.Diagnostics.Process.Start(outputPath);
@@ -368,25 +378,28 @@ namespace ExtractPDfs
             else
             {
                 //Extract Based in CSV
-                //File of found IDs
-
+                
                 FileInfo file = new FileInfo(PdfFile);
 
-                //Memory Stream
+                //Memory Stream to create the extracted document
 
                 var MEMstream = new MemoryStream();
                 var writer = new PdfWriter(MEMstream);
                 var pdf = new PdfDocument(writer);
 
-
+                //Set up extracted file variables
                 string pdfFileName = file.Name.Substring(0, file.Name.LastIndexOf(".")) + "-Extracted";
                 string outputPath = file.Directory.FullName;
                 string FilePath = outputPath + "\\" + pdfFileName + ".pdf";
                 StatusrichTextBox.AppendText("File to extract " + FilePath + Environment.NewLine);
+
+                //working list to extract multiple pages based on index searched to keep them together.
                 List<KeyValuePair<int, string>> MultiExtract = new List<KeyValuePair<int, string>>();
 
                 PdfDocument OutpdfDoc = new PdfDocument(writer);
 
+
+                //Progess bar setup for extraction
                 var lines = File.ReadAllLines(csvFile);
                 var count = 0;
                 progressBar1.Value = 0;
@@ -404,8 +417,10 @@ namespace ExtractPDfs
                                         
                     MultiExtract = pdfKeys.FindAll(x => x.Value == ID);
 
+                    //If more than one occurance of the index value is found, extract all the pages together.
                     if (MultiExtract.Count > 0)
                     {
+                        //If split files is cheched initialize a new pdf writer and export file name that included the serached index value.
                         if (SplitCheckBox3.Checked)
                         {
                             
@@ -421,10 +436,12 @@ namespace ExtractPDfs
                                 StatusrichTextBox.AppendText("Found " + ID + " On page " + kvp.Key + " ... Extracting." + Environment.NewLine);
                                 pdfDocExtract.CopyPagesTo(kvp.Key, kvp.Key, multi_OutpdfDoc);
                             }
+                            //Close the pdf writer to create the file and prepare for the new file to extract
                             multi_OutpdfDoc.Close();
                             StatusrichTextBox.AppendText("File extracted " + Multi_FilePath + Environment.NewLine);
 
                         }
+                        //Extract the pages without splitting the files
                         else
                         {
                             foreach (KeyValuePair<int, string> kvp in MultiExtract)
@@ -436,6 +453,7 @@ namespace ExtractPDfs
                        
 
                     }
+                    //If the serached vakue is not found, add that value to the not found pdf 
                     else
                     {
                         IDsNotFound.Add(ID);
@@ -444,7 +462,7 @@ namespace ExtractPDfs
                     }
 
 
-                    
+                    //Increment the counter for the status bar
                     progressBar1.Value = count;
                     count++;
 
@@ -466,6 +484,9 @@ namespace ExtractPDfs
                 PdfDocument ErrorOutpdfDoc = new PdfDocument(new PdfWriter(ErrorFilePath));
                 Document Errordocument = new Document(ErrorOutpdfDoc);
 
+
+
+                //Create the PDF document layout with the not found items.
                 Paragraph header = new Paragraph("NOT FOUND").SetTextAlignment(TextAlignment.CENTER).SetFontSize(20).SetFontColor(ColorConstants.RED);
 
 
@@ -485,7 +506,7 @@ namespace ExtractPDfs
 
                 Errordocument.Add(IDsNotFound);
 
-
+                //If the extracting function extracted multiple files, then this checks that the initial writer pdf is empty and closes it without writing to disk if empty or writes the file if there are pages present.
                 if (OutpdfDoc.GetNumberOfPages() > 0)
                 {
                     OutpdfDoc.Close();
@@ -569,6 +590,8 @@ namespace ExtractPDfs
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
+            //Delete the manual pdf file on close if it exitsts.
+            //System temp folder cleanup
             if(File.Exists(locationToInstructionsPdf))
                 {
 
