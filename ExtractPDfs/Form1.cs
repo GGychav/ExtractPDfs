@@ -235,7 +235,7 @@ namespace ExtractPDfs
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             
-            MessageBox.Show( "PDf Extractor 1.0", "About PDf Extractor");
+            MessageBox.Show( "PDf Extractor v1.0.0 \n \n created by: ychavez3@cps.edu \n \n AGPL Copyright 2022", "About PDf Extractor");
         }
 
 
